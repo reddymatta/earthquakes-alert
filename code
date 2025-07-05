@@ -1,0 +1,94 @@
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
+
+#define X_PIN A0
+#define Y_PIN A1
+#define Z_PIN A2
+#define BUZZER 12
+#define LED 13
+
+int xSample = 0, ySample = 0, zSample = 0;
+int alertFlag = 0;
+long startTime = 0;
+
+#define SAMPLES 50
+#define MAX_CHANGE 20
+#define MIN_CHANGE -20
+#define BUZZ_DURATION 5000
+
+char displayLine[17];
+
+void setup() {
+  Serial.begin(9600);
+  lcd.begin(16, 2);
+  pinMode(BUZZER, OUTPUT);
+  pinMode(LED, OUTPUT);
+  lcd.print("EarthQuake");
+  lcd.setCursor(0, 1);
+  lcd.print("Detector");
+  delay(2000);
+  lcd.clear();
+  lcd.print("Calibrating...");
+  lcd.setCursor(0, 1);
+  lcd.print("Please wait...");
+
+  for (int i = 0; i < SAMPLES; i++) {
+    xSample += analogRead(X_PIN);
+    ySample += analogRead(Y_PIN);
+    zSample += analogRead(Z_PIN);
+  }
+  xSample /= SAMPLES;
+  ySample /= SAMPLES;
+  zSample /= SAMPLES;
+
+  delay(1000);
+  lcd.clear();
+  lcd.print("Calibrated!");
+  delay(1000);
+  lcd.clear();
+}
+
+void loop() {
+  int xVal = analogRead(X_PIN);
+  int yVal = analogRead(Y_PIN);
+  int zVal = analogRead(Z_PIN);
+
+  int dx = xSample - xVal;
+  int dy = ySample - yVal;
+  int dz = zSample - zVal;
+
+  bool isQuake = (
+    dx < MIN_CHANGE || dx > MAX_CHANGE ||
+    dy < MIN_CHANGE || dy > MAX_CHANGE ||
+    dz < MIN_CHANGE || dz > MAX_CHANGE
+  );
+
+  if (isQuake && alertFlag == 0) {
+    startTime = millis();
+    alertFlag = 1;
+  }
+
+  if (alertFlag && millis() - startTime > BUZZ_DURATION) {
+    alertFlag = 0;
+  }
+
+  lcd.setCursor(0, 0);
+  if (alertFlag) {
+    lcd.print("Earthquake ALERT");
+  } else {
+    lcd.print(" X   Y   Z ");
+  }
+
+  sprintf(displayLine, "%4d %4d %4d", dx, dy, dz);
+  lcd.setCursor(0, 1);
+  lcd.print(displayLine);
+
+  Serial.print("X: "); Serial.print(dx);
+  Serial.print(" Y: "); Serial.print(dy);
+  Serial.print(" Z: "); Serial.println(dz);
+
+  digitalWrite(BUZZER, alertFlag);
+  digitalWrite(LED, alertFlag);
+
+  delay(300);
+}
