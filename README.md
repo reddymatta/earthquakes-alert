@@ -1,7 +1,8 @@
 **Alert system for Earthquakes**
-**AIM:**
 
+**AIM:**
 The aim of this project is to design and implement an Arduino-based earthquake detector using an ADXL335 accelerometer, LCD display, buzzer, and LED. The system detects unusual ground vibrations and provides real-time alerts through visual and audio signals, enhancing early warning and safety measures during seismic activity.
+
 **Results:**
 
 • When vibration is detected, the LED and buzzer turn ON, and the LCD displays "Earthquake ALERT"
